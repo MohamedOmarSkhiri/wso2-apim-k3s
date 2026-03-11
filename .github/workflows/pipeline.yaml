@@ -1,0 +1,59 @@
+name: WSO2 APIM CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  helm-lint:
+    name: Lint Helm Chart
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Lint Helm chart
+        run: helm lint helm/
+
+  build-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: helm-lint
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: omarsk99/wso2am:${{ github.sha }}
+
+  argocd-sync:
+    name: Sync ArgoCD
+    runs-on: ubuntu-latest
+    needs: build-push
+    steps:
+      - name: Install ArgoCD CLI
+        run: |
+          curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x argocd
+          sudo mv argocd /usr/local/bin/
+
+      - name: Sync ArgoCD App
+        run: |
+          argocd login ${{ secrets.ARGOCD_SERVER }} \
+            --username admin \
+            --password ${{ secrets.ARGOCD_PASSWORD }} \
+            --insecure
+          argocd app sync wso2-apim --insecure
