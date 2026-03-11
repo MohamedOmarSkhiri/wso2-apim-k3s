@@ -1,0 +1,27 @@
+{{- if .Values.wso2.deployment.persistence.solrIndexing.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ template "am-all-in-one.fullname" . }}-am-local-carbon-database-volume-claim
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: {{ .Values.wso2.deployment.persistence.solrIndexing.capacity.carbonDatabase }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ template "am-all-in-one.fullname" . }}-am-solr-indexed-data-volume-claim
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: {{ .Values.wso2.deployment.persistence.solrIndexing.capacity.solrIndexedData }}
+{{- end }}
