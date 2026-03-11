@@ -701,7 +701,7 @@ wso2:
 
   deployment:
     # Configure High Availability
-    highAvailability: false
+    highAvailability: true
     # Container image configurations
     image:
       # -- Container registry credentials.
