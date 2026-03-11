@@ -11,3 +11,4 @@ COPY --chown=wso2carbon:wso2carbon mysql-connector-java-8.0.28.jar ${WSO2_SERVER
 COPY --chown=wso2carbon:wso2carbon profileSetup.sh ${WSO2_SERVER_HOME}/bin
 
 # version 1.0
+# version 1.0
