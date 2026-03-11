@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master
+    paths-ignore:
+      - 'helm/values.yaml'
 
 jobs:
   helm-lint:
@@ -18,3 +20,62 @@ jobs:
 
       - name: Lint Helm chart
         run: helm lint helm/
+
+  build-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: helm-lint
+    # Only build when docker/ files change
+    if: |
+      contains(github.event.commits[0].modified, 'docker/') ||
+      contains(github.event.commits[0].added, 'docker/')
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: docker/
+          push: true
+          tags: omarsk99/wso2am:4.6.0-${{ github.sha }}
+
+  update-digest:
+    name: Update Image Digest in values.yaml
+    runs-on: ubuntu-latest
+    needs: build-push
+    if: needs.build-push.result == 'success'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Get new image digest
+        id: digest
+        run: |
+          DIGEST=$(docker buildx imagetools inspect omarsk99/wso2am:4.6.0-${{ github.sha }} \
+            --format '{{json .Manifest}}' | python3 -c "import sys,json; print(json.load(sys.stdin)['digest'])")
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+
+      - name: Update values.yaml with new digest
+        run: |
+          sed -i "s|digest: \"sha256:.*\"|digest: \"${{ steps.digest.outputs.digest }}\"|" helm/values.yaml
+          sed -i "s|repository: \"omarsk99/wso2am:4.6.0.*\"|repository: \"omarsk99/wso2am:4.6.0-${{ github.sha }}\"|" helm/values.yaml
+
+      - name: Commit and push updated values.yaml
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add helm/values.yaml
+          git commit -m "ci: update image digest to ${{ github.sha }}"
+          git push origin master
