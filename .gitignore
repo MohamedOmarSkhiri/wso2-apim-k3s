@@ -1,0 +1,6 @@
+*.key
+*.pem
+*.p12
+*.jks
+helm/wso2-ca.srl
+helm/certs/
