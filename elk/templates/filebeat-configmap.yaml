@@ -13,22 +13,19 @@ data:
           - /home/wso2carbon/wso2am-4.6.0/repository/logs/wso2-apigw-errors.log
           - /home/wso2carbon/wso2am-4.6.0/repository/logs/http_access*.log
         fields:
-          service: wso2-apim
-          environment: local-k3s
-          log_type: application
+          log_type: wso2-logs
         fields_under_root: true
-        multiline.pattern: '^\['
+        multiline.pattern: '\['
         multiline.negate: true
         multiline.match: after
 
       - type: log
         enabled: true
         paths:
-          - /home/wso2carbon/wso2am-4.6.0/repository/logs/audit.log
+          - /home/wso2carbon/wso2am-4.6.0/repository/logs/apim_metrics.log
+        include_lines: ['(apimMetrics):']
         fields:
-          service: wso2-apim
-          environment: local-k3s
-          log_type: audit
+          log_type: wso2-analytics
         fields_under_root: true
 
     output.logstash:

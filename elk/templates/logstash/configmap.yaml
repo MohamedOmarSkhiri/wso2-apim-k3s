@@ -9,20 +9,17 @@ data:
     xpack.monitoring.enabled: false
 
   pipelines.yml: |
-    - pipeline.id: wso2-logs
-      path.config: "/usr/share/logstash/pipeline/wso2-logs.conf"
-    - pipeline.id: wso2-analytics
-      path.config: "/usr/share/logstash/pipeline/wso2-analytics.conf"
+    - pipeline.id: wso2-main
+      path.config: "/usr/share/logstash/pipeline/wso2-main.conf"
 
-  wso2-logs.conf: |
+  wso2-main.conf: |
     input {
       beats {
         port => 5044
-        type => "wso2-logs"
       }
     }
     filter {
-      if [type] == "wso2-logs" {
+      if [log_type] == "wso2-logs" {
         grok {
           match => {
             "message" => "\[%{TIMESTAMP_ISO8601:log_timestamp}\] %{LOGLEVEL:log_level}\s+\{%{DATA:class}\} - %{GREEDYDATA:log_message}"
@@ -43,44 +40,32 @@ data:
             "service" => "wso2-apim"
           }
         }
-      }
-    }
-    output {
-      elasticsearch {
-        hosts => ["http://elasticsearch:9200"]
-        index => "wso2-logs-%{+YYYY.MM.dd}"
-      }
-    }
-
-  wso2-analytics.conf: |
-    input {
-      http {
-        port => 8080
-        codec => json
-        type => "wso2-analytics"
-      }
-    }
-    filter {
-      if [type] == "wso2-analytics" {
-        mutate {
-          add_field => {
-            "environment" => "local-k3s"
-            "service"     => "wso2-apim"
-          }
+      } else if [log_type] == "wso2-analytics" {
+        grok {
+          match => ["message", "%{GREEDYDATA:UNWANTED} apimMetrics:%{GREEDYDATA:apimMetrics}, %{GREEDYDATA:UNWANTED2} :%{GREEDYDATA:properties}"]
         }
-        if [responseCode] {
-          mutate {
-            convert => { "responseCode" => "integer" }
-          }
-          if [responseCode] >= 400 {
-            mutate { add_tag => ["api-error"] }
-          }
+        json {
+          source => "properties"
         }
       }
     }
     output {
-      elasticsearch {
-        hosts => ["http://elasticsearch:9200"]
-        index => "wso2-analytics-%{+YYYY.MM.dd}"
+      if [log_type] == "wso2-logs" {
+        elasticsearch {
+          hosts => ["http://elasticsearch:9200"]
+          index => "wso2-logs-%{+YYYY.MM.dd}"
+        }
+      } else if [log_type] == "wso2-analytics" {
+        if [apimMetrics] == " apim:response" {
+          elasticsearch {
+            hosts => ["http://elasticsearch:9200"]
+            index => "apim_event_response"
+          }
+        } else if [apimMetrics] == " apim:faulty" {
+          elasticsearch {
+            hosts => ["http://elasticsearch:9200"]
+            index => "apim_event_faulty"
+          }
+        }
       }
     }
