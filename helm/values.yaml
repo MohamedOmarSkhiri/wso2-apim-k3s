@@ -195,18 +195,29 @@ kubernetes:
   #   - name: my-secret
   #     mountPath: /opt/wso2/secrets
   #     readOnly: true
-  extraVolumeMounts: []
+  extraVolumeMounts:
+    - name: wso2-logs
+      mountPath: /home/wso2carbon/wso2am-4.6.0/repository/logs
+      readOnly: false
+    - name: filebeat-config
+      mountPath: /etc/filebeat
+      readOnly: true
   # -- Define the extra volumes to be mounted
   # extraVolumes:
   #   - name: my-secret
   #     secret:
   #       secretName: my-k8s-secret
-  extraVolumes: []
+  extraVolumes:
+    - name: wso2-logs
+      emptyDir: {}
+    - name: filebeat-config
+      configMap:
+        name: filebeat-config
 
 wso2:
   # -- ELK Analytics Parameters
   ELKAnalytics:
-    enabled: false
+    enabled: true
 
   # -- Moesif Analytics Parameters
   moesifAnalytics:

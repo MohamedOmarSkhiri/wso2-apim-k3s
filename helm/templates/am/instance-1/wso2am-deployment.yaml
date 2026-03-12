@@ -284,6 +284,24 @@ spec:
             - name: wso2am-solr
               mountPath: /home/wso2carbon/solr/indexed-data
             {{ end }}
+        - name: filebeat
+          image: docker.elastic.co/beats/filebeat:8.12.0
+          args: ["-c", "/etc/filebeat/filebeat.yml", "-e"]
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          volumeMounts:
+            - name: wso2-logs
+              mountPath: /home/wso2carbon/wso2am-4.6.0/repository/logs
+              readOnly: true
+            - name: filebeat-config
+              mountPath: /etc/filebeat/filebeat.yml
+              subPath: filebeat.yml
+              readOnly: true
       {{- if .Values.wso2.deployment.nodeSelector }}
       nodeSelector:
         {{- toYaml .Values.wso2.deployment.nodeSelector | nindent 8 }}
