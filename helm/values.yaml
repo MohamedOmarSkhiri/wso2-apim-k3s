@@ -267,7 +267,7 @@ wso2:
         # -- APIM AM_DB configurations.
         apim_db:
           # -- APIM AM_DB URL
-          url: "jdbc:mysql://192.168.1.135:3306/apim_db?useSSL=false&amp;allowPublicKeyRetrieval=true"
+          url: "jdbc:mysql://10.108.242.33:3306/apim_db?useSSL=false&amp;allowPublicKeyRetrieval=true"
           # -- APIM AM_DB username
           username: "apimadmin"
           # -- APIM AM_DB password
@@ -283,7 +283,7 @@ wso2:
             minIdle: 5
         shared_db:
           # -- APIM SharedDB URL
-          url: "jdbc:mysql://192.168.1.135:3306/shared_db?useSSL=false&amp;allowPublicKeyRetrieval=true"
+          url: "jdbc:mysql://10.108.242.33:3306/shared_db?useSSL=false&amp;allowPublicKeyRetrieval=true"
           # -- APIM SharedDB username
           username: "sharedadmin"
           # -- APIM SharedDB password
