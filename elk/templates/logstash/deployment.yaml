@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logstash
+  namespace: {{ .Values.global.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logstash
+  template:
+    metadata:
+      labels:
+        app: logstash
+    spec:
+      containers:
+        - name: logstash
+          image: {{ .Values.logstash.image }}:{{ .Values.logstash.tag }}
+          ports:
+            - containerPort: {{ .Values.logstash.ports.beats }}
+              name: beats
+            - containerPort: {{ .Values.logstash.ports.http }}
+              name: http
+            - containerPort: {{ .Values.logstash.ports.api }}
+              name: api
+          env:
+            - name: LS_JAVA_OPTS
+              value: "-Xms256m -Xmx256m"
+          resources:
+            {{- toYaml .Values.logstash.resources | nindent 12 }}
+          volumeMounts:
+            - name: logstash-pipeline
+              mountPath: /usr/share/logstash/config/logstash.yml
+              subPath: logstash.yml
+            - name: logstash-pipeline
+              mountPath: /usr/share/logstash/config/pipelines.yml
+              subPath: pipelines.yml
+            - name: logstash-pipeline
+              mountPath: /usr/share/logstash/pipeline/wso2-logs.conf
+              subPath: wso2-logs.conf
+            - name: logstash-pipeline
+              mountPath: /usr/share/logstash/pipeline/wso2-analytics.conf
+              subPath: wso2-analytics.conf
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.logstash.ports.api }}
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 5
+      volumes:
+        - name: logstash-pipeline
+          configMap:
+            name: logstash-pipeline

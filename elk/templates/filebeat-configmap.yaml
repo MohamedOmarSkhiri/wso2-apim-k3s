@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebeat-config
+  namespace: wso2-apim
+data:
+  filebeat.yml: |
+    filebeat.inputs:
+      - type: log
+        enabled: true
+        paths:
+          - /home/wso2carbon/wso2am-4.6.0/repository/logs/wso2carbon.log
+          - /home/wso2carbon/wso2am-4.6.0/repository/logs/wso2-apigw-errors.log
+          - /home/wso2carbon/wso2am-4.6.0/repository/logs/http_access*.log
+        fields:
+          service: wso2-apim
+          environment: local-k3s
+          log_type: application
+        fields_under_root: true
+        multiline.pattern: '^\['
+        multiline.negate: true
+        multiline.match: after
+
+      - type: log
+        enabled: true
+        paths:
+          - /home/wso2carbon/wso2am-4.6.0/repository/logs/audit.log
+        fields:
+          service: wso2-apim
+          environment: local-k3s
+          log_type: audit
+        fields_under_root: true
+
+    output.logstash:
+      hosts: ["logstash.elk.svc.cluster.local:5044"]
+
+    logging.level: warning
+    logging.to_files: false

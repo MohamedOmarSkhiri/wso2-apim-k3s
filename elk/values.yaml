@@ -1,0 +1,45 @@
+global:
+  namespace: elk
+
+elasticsearch:
+  image: docker.elastic.co/elasticsearch/elasticsearch
+  tag: "8.12.0"
+  replicas: 1
+  heapSize: "512m"
+  storage:
+    size: 5Gi
+    storageClass: longhorn
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "1.5Gi"
+      cpu: "1000m"
+
+logstash:
+  image: docker.elastic.co/logstash/logstash
+  tag: "8.12.0"
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+  ports:
+    beats: 5044
+    http: 8080
+    api: 9600
+
+kibana:
+  image: docker.elastic.co/kibana/kibana
+  tag: "8.12.0"
+  host: kibana.local
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
