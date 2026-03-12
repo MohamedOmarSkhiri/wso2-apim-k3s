@@ -26,4 +26,5 @@ spec:
       services:
         - name: kibana
           port: 5601
-  tls: {}
+  tls:
+    secretName: kibana-tls-secret
